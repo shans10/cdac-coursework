@@ -2,10 +2,10 @@
 # Problem Statement: Write an algorithm to transpose a square matrix A within A.
 #
 
-# for taking input from user for m*n matrix
+# For taking input from user for m*n matrix
 n = int(input("Enter the number of rows and columns in nxn matrix: "))
 
-# for taking the matrix input by the user
+# For taking the matrix input by the user
 matrix = []
 
 for i in range(n):
@@ -16,7 +16,7 @@ for i in range(n):
     matrix.append(a)
 
 
-# printing the original matrix
+# Printing the original matrix
 print("The matrix is: ")
 for i in range(n):
     for j in range(n):
@@ -24,15 +24,15 @@ for i in range(n):
     print()
 
 
-# here is the fuction which transpose the matrix within the same matrix
+# Here is the fuction which transpose the matrix within the same matrix
 for i in range(n):
-    for j in range(i+1):
-        temp=matrix[i][j]
-        matrix[i][j]=matrix[j][i]
-        matrix[j][i]=temp
+    for j in range(i + 1):
+        temp = matrix[i][j]
+        matrix[i][j] = matrix[j][i]
+        matrix[j][i] = temp
 
 
-# printing the transpose of the original matrix
+# Printing the transpose of the original matrix
 print("The matrix after being transposedis: ")
 
 for i in range(n):

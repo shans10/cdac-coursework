@@ -2,6 +2,7 @@
 # Problem Statement: Write an algorithm to multiply two matrices Amxn and Bnxp.
 #
 
+
 # Function to take matrix input from user
 def input_matrix(name):
     rows = int(input(f"Enter the number of rows for {name}: "))
@@ -15,6 +16,7 @@ def input_matrix(name):
 
     return matrix
 
+
 # Function to multiply two matrices
 def multiply_matrices(matrix1, matrix2):
     # Get dimensions
@@ -25,7 +27,9 @@ def multiply_matrices(matrix1, matrix2):
 
     # Ensure multiplication is valid
     if cols_matrix1 != rows_matrix2:
-        raise ValueError("Number of columns in Matrix 1 must equal number of rows in Matrix 2")
+        raise ValueError(
+            "Number of columns in Matrix 1 must equal number of rows in Matrix 2"
+        )
 
     # Initialize the result matrix with zeros
     result = [[0 for _ in range(cols_matrix2)] for _ in range(rows_matrix1)]
@@ -38,10 +42,12 @@ def multiply_matrices(matrix1, matrix2):
 
     return result
 
+
 # Function to display matrix
 def display_matrix(matrix):
     for row in matrix:
         print(" ".join(map(str, row)))
+
 
 # Main program
 if __name__ == "__main__":

@@ -1,65 +1,79 @@
-#
-# Problem Statement: Write a program to check whether the matrix is invertible or not, if yes find the inverse.
-#
-
-# for taking input from user
-n = int(input("Enter the number of rows and columns in nxn matrix: "))
-
-# for taking the matrix input by the user
-matrix = []
-
-for i in range(n):
-    print(f"Enter the {i+1} row of the matrix:")
-    a = []
-    for j in range(n):
-        a.append(int(input()))
-    matrix.append(a)
-
-# printing the original matrix
-print("The matrix is: ")
-for i in range(n):
-    for j in range(n):
-        print(matrix[i][j], end=" ")
-    print()
-
-# checking if the matrix is invertible or not
-
-   ## here we get the minor of the matrix
-def get_minor(matrix, row, col):
-    return [r[:col] + r[col+1:] for r in (matrix[:row] + matrix[row+1:])]
-
-   ## here we get the determinant of the matrix
-def determinant(matrix):
-    if len(matrix) == 1:  # Base case for 1x1 matrix
-        return matrix[0][0]
-    if len(matrix) == 2:  # Base case for 2x2 matrix
-        return matrix[0][0] * matrix[1][1] - matrix[0][1] * matrix[1][0]
-
-    det = 0
-    for c in range(len(matrix)):
-        det += ((-1) ** c) * matrix[0][c] * determinant(get_minor(matrix, 0, c))
-    return det
-
-    ## here we chec if the matrix is invertible or not
-if determinant(matrix) == 0:
-    print("The matrix is not invertible")
-    exit()
-else:
-    print("The matrix is invertible")
-
-
-# for getting the inverse of the matrix if the matrix is invertible
-def inverse(matrix):
-    det = determinant(matrix)
-    for i in range(len(matrix)):
-        for j in range(len(matrix[0])):
-            matrix[i][j] =determinant(get_minor(matrix, i, j))*(-1)**(i+j)  / det
-
+# Get the elements of the matrix from user
+def get_matrix_from_user(size):
+    print(f"Enter the elements of the {size}x{size} matrix row-wise:")
+    matrix = []
+    for i in range(size):
+        row = list(map(float, input(f"Row {i + 1}: ").strip().split()))
+        if len(row) != size:
+            raise ValueError("Number of columns must match the matrix size.")
+        matrix.append(row)
     return matrix
 
-matrix1 =inverse(matrix)
-print("The inverse matrix is: ")
-for i in range(len(matrix1)):
-    for j in range(len(matrix1[0])):
-        print(matrix1[i][j], end=" ")
-    print()
+
+# Print the matrix
+def print_matrix(matrix):
+    for row in matrix:
+        print(" ".join(f"{elem:.2f}" for elem in row))
+
+
+# Get the identity matrix for the given matrix
+def get_identity_matrix(size):
+    return [[1 if i == j else 0 for j in range(size)] for i in range(size)]
+
+
+# Calculate the inverse of the given matrix
+def calculate_inverse(matrix):
+    size = len(matrix)
+    augmented_matrix = [
+        row[:] + identity_row[:]
+        for row, identity_row in zip(matrix, get_identity_matrix(size))
+    ]
+
+    for i in range(size):
+        # Make the diagonal contain all 1s
+        diag = augmented_matrix[i][i]
+        if diag == 0:
+            return None  # Matrix is singular
+
+        for j in range(2 * size):
+            augmented_matrix[i][j] /= diag
+
+        # Make the other rows contain 0s in the current column
+        for k in range(size):
+            if k != i:
+                factor = augmented_matrix[k][i]
+                for j in range(2 * size):
+                    augmented_matrix[k][j] -= factor * augmented_matrix[i][j]
+
+    # Extract the inverse matrix
+    inverse_matrix = [row[size:] for row in augmented_matrix]
+    return inverse_matrix
+
+
+# Main function to perform matrix inversion
+def main():
+    # Check user input is positive for size of matrix
+    try:
+        size = int(input("Enter the size of the square matrix (e.g., 2 for 2x2): "))
+        if size <= 0:
+            raise ValueError("Size must be a positive integer.")
+
+        matrix = get_matrix_from_user(size)
+
+        print("Input Matrix:")
+        print_matrix(matrix)
+
+        inverse = calculate_inverse(matrix)
+
+        if inverse:
+            print("Inverse Matrix:")
+            print_matrix(inverse)
+        else:
+            print("The matrix is singular and does not have an inverse.")
+
+    except ValueError as e:
+        print(f"Error: {e}")
+
+
+if __name__ == "__main__":
+    main()
