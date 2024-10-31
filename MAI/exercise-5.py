@@ -60,13 +60,13 @@ def main():
 
         matrix = get_matrix_from_user(size)
 
-        print("Input Matrix:")
+        print("\nInput Matrix:")
         print_matrix(matrix)
 
         inverse = calculate_inverse(matrix)
 
         if inverse:
-            print("Inverse Matrix:")
+            print("\nInverse Matrix:")
             print_matrix(inverse)
         else:
             print("The matrix is singular and does not have an inverse.")
