@@ -1,3 +1,9 @@
+#
+# Problem Statement: Find if the give matrix is invertible. If yes,
+# then find the inverted matrix using the Augmented Matrix method.
+#
+
+
 # Get the elements of the matrix from user
 def get_matrix_from_user(size):
     print(f"Enter the elements of the {size}x{size} matrix row-wise:")

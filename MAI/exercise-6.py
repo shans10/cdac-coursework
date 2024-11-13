@@ -1,3 +1,9 @@
+#
+# Problem Statement: Find if the give matrix is invertible. If yes,
+# then find the inverted matrix using the Adjoint method.
+#
+
+
 # Function to calculate the determinant of a matrix
 def determinant(matrix):
     if len(matrix) == 2:  # Base case for 2x2 matrix
@@ -8,9 +14,11 @@ def determinant(matrix):
         det += ((-1) ** c) * matrix[0][c] * determinant(minor(matrix, 0, c))
     return det
 
+
 # Function to calculate the minor of a matrix (removes i-th row and j-th column)
 def minor(matrix, i, j):
-    return [row[:j] + row[j+1:] for row in (matrix[:i] + matrix[i+1:])]
+    return [row[:j] + row[j + 1 :] for row in (matrix[:i] + matrix[i + 1 :])]
+
 
 # Function to calculate the cofactor matrix
 def cofactor_matrix(matrix):
@@ -23,9 +31,11 @@ def cofactor_matrix(matrix):
         cofactors.append(cofactor_row)
     return cofactors
 
+
 # Function to transpose a matrix (to get the adjugate matrix)
 def transpose(matrix):
     return [[matrix[j][i] for j in range(len(matrix))] for i in range(len(matrix))]
+
 
 # Function to find the inverse of a matrix using the cofactor adjoint method
 def inverse(matrix):
@@ -40,9 +50,13 @@ def inverse(matrix):
     adjugate = transpose(cofactors)
 
     # Divide adjugate matrix by the determinant to get the inverse matrix
-    inverse_matrix = [[adjugate[r][c] / det for c in range(len(adjugate))] for r in range(len(adjugate))]
+    inverse_matrix = [
+        [adjugate[r][c] / det for c in range(len(adjugate))]
+        for r in range(len(adjugate))
+    ]
 
     return inverse_matrix
+
 
 # Function to take matrix input from the user
 def input_matrix(name):
@@ -54,10 +68,12 @@ def input_matrix(name):
         matrix.append(row)
     return matrix
 
+
 # Function to display a matrix
 def display_matrix(matrix):
     for row in matrix:
         print(" ".join(map(lambda x: f"{x:.6f}", row)))
+
 
 # Main program
 if __name__ == "__main__":
