@@ -3,7 +3,7 @@ import pandas as pd
 
 # Read the data from the file gapminder.csv
 current_dir = os.path.dirname(__file__)
-data = pd.read_csv(current_dir + "/data/gapminder.csv")
+data = pd.read_csv(current_dir + "/dataset/gapminder.csv")
 
 # Verify that the data has been loaded correctly
 print(data.head())
