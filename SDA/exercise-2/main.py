@@ -55,7 +55,7 @@ print("\nSummary statistics of the dataframe:")
 print(summary_statistics)
 
 # export data_no_outliers to a new csv file
-data_no_outliers.to_csv("cleaned_dataset", index=False)
+data_no_outliers.to_csv(current_dir  + "/dataset/cleaned_dataset", index=False)
 
 # Plot histogram for numerical features and bar plot for categorical features
 import matplotlib.pyplot as plt
