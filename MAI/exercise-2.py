@@ -33,7 +33,7 @@ for i in range(n):
 
 
 # Printing the transpose of the original matrix
-print("The matrix after being transposedis: ")
+print("The matrix after being transposed is: ")
 
 for i in range(n):
     for j in range(n):

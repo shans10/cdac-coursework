@@ -43,6 +43,13 @@ def inverse(matrix):
     if det == 0:
         raise ValueError("The matrix is singular and cannot have an inverse.")
 
+    # Special case for 2x2 matrix
+    if len(matrix) == 2:
+        return [
+            [matrix[1][1] / det, -1 * matrix[0][1] / det],
+            [-1 * matrix[1][0] / det, matrix[0][0] / det],
+        ]
+
     # Find the cofactor matrix
     cofactors = cofactor_matrix(matrix)
 
