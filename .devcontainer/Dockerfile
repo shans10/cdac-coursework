@@ -1,9 +1,8 @@
-# Pull python image with uv
 FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 
 # Install git
 RUN apt update && apt upgrade -y
-Run apt install -y --no-install-recommends git curl
+RUN apt install -y --no-install-recommends git curl
 
 # Set user to root
 USER root
@@ -38,3 +37,9 @@ RUN curl -sS https://starship.rs/install.sh | sh -s -- -y
 RUN printf "\n# Load starship prompt\n" >> /home/$USERNAME/.bashrc
 RUN echo 'eval "$(starship init bash)"' >> /home/$USERNAME/.bashrc
 
+# Create a python virtual environment using uv
+RUN uv venv /home/$USERNAME/venv --seed
+# Use the virtual environment automatically
+ENV VIRTUAL_ENV=/home/$USERNAME/venv
+# Place entry points in the environment at the front of the path
+ENV PATH="/home/$USERNAME/venv/bin:/home/$USERNAME/.local/bin:$PATH"
