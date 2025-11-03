@@ -1,0 +1,25 @@
+services:
+  jupyter:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        USERNAME: dev
+        USER_UID: 1000
+        USER_GID: 1000
+    container_name: jupyterlab
+    user: dev
+    ports:
+      - "8888:8888"
+    volumes:
+      - .:/code
+      - ./overrides.json:/home/dev/.jupyter/lab/user-settings/overrides.json
+    working_dir: /code    
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
