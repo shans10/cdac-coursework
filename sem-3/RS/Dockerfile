@@ -44,4 +44,4 @@ RUN uv pip install jupyterlab
 EXPOSE 8888
 
 # Command to run JupyterLab
-CMD ["jupyter", "lab", "--ip=0.0.0.0", "--port=8888", "--no-browser", "--NotebookApp.token='rs'"]
+CMD ["jupyter", "lab", "--ip=0.0.0.0", "--port=8888", "--no-browser"]

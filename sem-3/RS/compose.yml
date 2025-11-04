@@ -13,13 +13,12 @@ services:
       - "8888:8888"
     volumes:
       - .:/code
-      - ./overrides.json:/home/dev/.jupyter/lab/user-settings/overrides.json
     working_dir: /code    
     restart: unless-stopped
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
