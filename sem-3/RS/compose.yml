@@ -13,7 +13,7 @@ services:
       - "8888:8888"
     volumes:
       - .:/code
-    working_dir: /code    
+    working_dir: /code
     restart: unless-stopped
     # deploy:
     #   resources:
