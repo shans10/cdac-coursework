@@ -1,0 +1,388 @@
+\documentclass[10pt,twocolumn,letterpaper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{cite}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{fancyhdr}
+\usepackage{geometry}
+\usepackage{tabularx}
+
+\geometry{margin=0.75in}
+
+\title{\textbf{Self-Supervised Monocular Depth Estimation from Videos}}
+
+\author{
+\begin{minipage}[t]{0.45\textwidth}
+\centering
+\textbf{Shantanu Shukla}\\
+Centre for Development of Advanced Computing (C-DAC)\\
+Noida, India\\
+\href{mailto:shantanu.shukla10@gmail.com}{shantanu.shukla10@gmail.com}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{0.45\textwidth}
+\centering
+\textbf{Rosy Verma}\\
+Centre for Development of Advanced Computing (C-DAC)\\
+Noida, India\\
+\href{mailto:rosyverma@cdac.in}{rosyverma@cdac.in}
+\end{minipage}
+}
+
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+Self-supervised monocular depth estimation from video sequences has emerged as a pivotal research direction over the past seven years, enabling three-dimensional scene reconstruction without explicit depth annotations. This paper presents a comprehensive review of ten seminal works spanning from 2018 to 2025, tracing the evolution from foundational approaches handling dynamic scenes to specialized architectures optimized for efficiency, robustness, and scalability. We analyze key innovations including dynamic scene decomposition (Struct2Depth, 2018), architectural simplification and auto-masking mechanisms (Monodepth2, 2019), detail preservation strategies (PackNet-SfM, 2019), temporal memory integration (Zhang et al., 2019), uncertainty quantification (Johnston et al., 2020), geometric constraint integration (Luo et al., 2020), training-time consistency enforcement (Li et al., 2021), lightweight design paradigms (Lite-Mono, 2023), multi-perspective fusion for dynamic robustness (ManyDepth2, 2024), and extended sequence processing (Video Depth Anything, 2025). We examine unresolved challenges including metric scale ambiguity, domain generalization limitations, and the absence of unified approaches combining efficiency, dynamic robustness, and extended scalability. Finally, we identify promising research directions for future investigations and highlight the complementary nature of current specializations.
+
+\noindent \textbf{Index Terms:} Self-supervised learning, monocular depth estimation, video processing, depth from motion, temporal consistency, neural networks
+\end{abstract}
+
+\section{Introduction}
+\label{sec:intro}
+
+Determining three-dimensional scene structure from monocular video sequences represents a fundamental computer vision problem with substantial practical implications for robotics, autonomous navigation, augmented reality, and surveillance systems \cite{godard2019digging}. Traditional approaches employing stereo vision or active depth sensors (Light Detection and Ranging) provide precise measurements but incur significant hardware costs and power consumption penalties prohibitive for resource-constrained platforms \cite{hartley2003multiple}. Monocular depth estimation addresses these constraints by inferring depth information from single or temporal sequences of RGB images.
+
+Self-supervised learning paradigms enable training without expensive depth ground-truth annotations, instead exploiting intrinsic relationships within video sequences \cite{lecun2015deep}. By observing how image intensities vary between frames during camera and object motion, networks learn geometric relationships governing depth structures \cite{jaderberg2015spatial}. This approach circumvents annotation bottlenecks while maintaining competitive accuracy relative to supervised alternatives.
+
+The field has progressed substantially since initial investigations, evolving through multiple research phases:
+
+\begin{itemize}
+    \item \textbf{Foundational phase (2018-2019):} Establishing basic feasibility and introducing core mechanisms
+    \item \textbf{Refinement phase (2019-2021):} Addressing temporal consistency and geometric constraints
+    \item \textbf{Specialization phase (2023-2025):} Optimizing for specific deployment scenarios
+\end{itemize}
+
+This review comprehensively analyzes ten representative works spanning this evolution, examining technical contributions, trade-offs, and research opportunities. We structure the analysis chronologically, enabling readers to understand how successive investigations built upon and addressed prior limitations.
+
+\section{Foundational Approaches: Dynamic Scene Handling}
+\label{sec:foundational}
+
+\subsection{Struct2Depth (2018)}
+\label{subsec:struct2depth}
+
+The earliest systematic approach to self-supervised monocular depth estimation faced a fundamental challenge: distinguishing camera motion from object motion \cite{casser2019depth}. Early methods assumed static scenes, where all pixel displacement resulted from camera movement and changing viewpoints. Real-world scenes violate this assumption fundamentally—pedestrians walk, vehicles maneuver, and objects deform independently.
+
+Struct2Depth introduced a framework jointly optimizing three outputs: scene depth, camera trajectory, and pixel-level object motion masks. The motion decomposition mechanism explicitly separated background pixels from independently moving foreground regions. This decomposition enabled more accurate depth estimation by preventing moving objects from corrupting depth predictions.
+
+However, integrating pre-trained segmentation networks increased system complexity and computational overhead. The approach demonstrated greatest effectiveness on short video sequences, with performance degrading on extended recordings.
+
+\subsection{Monodepth2 (2019)}
+\label{subsec:monodepth2}
+
+Contrasting with Struct2Depth's architectural complexity, Monodepth2 demonstrated that elegant simplicity could achieve competitive or superior performance \cite{godard2019digging}. The work introduced two focused mechanisms without requiring external segmentation networks.
+
+The \textbf{minimum reprojection loss} principle selected optimal pixel correspondences rather than averaging multiple candidates. When matching a target pixel with potential reference matches, the loss employed the best matching pixel intensity error. This selection operation naturally favored reliable correspondences while suppressing ambiguous matches.
+
+The \textbf{auto-masking mechanism} automatically excluded pixels with minimal motion, recognizing that stationary background elements contribute negligibly to depth discrimination. Stationary pixels change position solely due to viewing angle changes without providing motion cues for depth learning.
+
+The combined effect of these two mechanisms produced robust depth predictions with minimal architectural complexity. Monodepth2 achieved rapid widespread adoption, establishing itself as the reference baseline for subsequent research.
+
+\textit{Limitation:} Video sequences produced systematic temporal instability—depth estimates fluctuated substantially between adjacent frames despite static scene content. This frame-to-frame flickering introduced problems for applications requiring spatiotemporal consistency.
+
+\subsection{PackNet-SfM (2019)}
+\label{subsec:packnet}
+
+Concurrent research pursued alternative directions emphasizing geometric detail preservation \cite{guizilini20203d}. While Monodepth2 prioritized baseline establishment, PackNet investigated whether standard architectures inevitably sacrificed fine-grained spatial information.
+
+Novel 3D packing operations reorganized convolution arrangements to minimize information loss, maximizing utilization of computational capacity. This architectural innovation enabled competitive depth accuracy with sharper geometric structures.
+
+Notably, PackNet incorporated optional velocity supervision—when ground-truth motion information became available, networks learned metric depth scale rather than relative depth relationships. This enabled quantitative statements such as ``distance = 3 meters'' rather than only relative comparisons.
+
+\textit{Trade-off:} Detail preservation required substantial computational investment. The model employed 128 million parameters (approximately $40\times$ greater than contemporary efficient approaches) and required 60 milliseconds per frame, limiting real-time deployment on resource-constrained platforms.
+
+\section{Temporal Consistency Approaches}
+\label{sec:temporal}
+
+\subsection{Exploiting Temporal Consistency (2019)}
+\label{subsec:zhang2019}
+
+Recognition emerged that frame-independent processing ignored critical temporal coherence inherent in video sequences \cite{zhang2019exploiting}. Scene geometry changes gradually—if a wall measures 5 meters in frame $t$, it should remain approximately 5 meters in frame $t+1$.
+
+This investigation integrated Long Short-Term Memory networks—architectures specifically designed for sequential dependency modeling—with spatial processing modules. The spatiotemporal architecture incorporated Generative Adversarial Network training encouraging natural-appearing depth maps.
+
+Quantitative metrics for temporal stability (Temporal Consistency Metric and Temporal Motion Consistency) enabled objective frame-to-frame smoothness measurement.
+
+\textit{Achievement:} Real-time video processing became feasible with substantially reduced temporal instability.
+
+\textit{Limitation:} LSTM networks function optimally with limited sequence lengths (approximately 10--20 frames). Extended sequences exhaust memory capacity, forcing networks to ``forget'' early context. Additionally, temporal component integration substantially increased computational requirements.
+
+\subsection{Self-Attention Depth Estimation (2020)}
+\label{subsec:johnston2020}
+
+The 2020 emergence of Transformer architectures prompted investigation into attention mechanisms for depth estimation \cite{johnston2020self}. Self-attention mechanisms permit each spatial location to incorporate information from arbitrary distant locations—overcoming local receptive field constraints of convolutional approaches.
+
+Integration incorporated self-attention modules enabling contextual information aggregation across entire images. Additionally, discrete disparity volume formulations output probability distributions across depth hypotheses rather than point estimates, quantifying prediction uncertainty.
+
+Uncertainty estimation provided valuable meta-information regarding prediction reliability, proving particularly useful for occlusion and textureless regions.
+
+\textit{Limitation:} Despite architectural sophistication, focus remained on single-image processing. Video temporal consistency received minimal attention, representing unfinished research directions.
+
+\subsection{Consistent Video Depth (2020)}
+\label{subsec:luo2020}
+
+Alternative research pursued geometric integration rather than exclusive reliance on learned patterns \cite{luo2020consistent}. This investigation questioned whether classical computer vision geometry—mathematical truths governing three-dimensional scenes—could enhance consistency.
+
+The hybrid approach trained neural networks for approximate depth prediction, then applied geometric optimization during inference. Constraints included epipolar geometry verification, optical flow alignment, and spatial depth smoothness. Test-time optimization iteratively refined predictions, enforcing geometric consistency.
+
+\textit{Conceptual significance:} The work demonstrated that geometric truth and learned prediction represent complementary rather than competing approaches. Combining both produced outputs satisfying both learned patterns and mathematical constraints.
+
+\textit{Computational cost:} Test-time optimization prevented real-time processing. Single-minute video sequences required hours of computation, limiting practical applicability despite superior theoretical consistency.
+
+\subsection{Enforcing Temporal Consistency in Video Depth Estimation (2021)}
+\label{subsec:li2021}
+
+Alternative to computational test-time optimization or recurrent components, this work investigated whether training itself could instill temporal smoothness understanding \cite{li2021enforcing}. Rather than post-processing or architectural modification, training signals could emphasize: ``When scene content remains static, depth should exhibit minimal change.''
+
+Optical flow estimation provided motion measurements between frames. A temporal loss function established constraints: depth variations should correspond to observed motion. Substantial depth changes without corresponding motion received penalties.
+
+\textit{Advantages:} No test-time overhead; no LSTM complexity. Inference maintained baseline speed while substantially reducing temporal instability. The approach demonstrated pragmatism—minimal added complexity delivered meaningful improvements.
+
+\textit{Dependency:} Optical flow quality directly determined consistency quality. Errors in flow propagated to consistency failures.
+
+\section{Specialized Optimization Approaches}
+\label{sec:specialized}
+
+\subsection{Lite-Mono: Efficient Architecture Design (2023)}
+\label{subsec:litermono}
+
+Resource-constrained platform deployment remained largely unaddressed—contemporary models exhibited computational requirements prohibiting edge device execution \cite{zhang2023lite}. Standard models required 100+ milliseconds on desktop systems and exceeded power budgets of embedded platforms.
+
+Lite-Mono fundamentally reconsidered architectural efficiency through two mechanisms:
+
+\textbf{1. Consecutive Dilated Convolutions (CDC):} Dilated convolutions employ kernel spacing enabling distant region perception without stacking numerous layers. Multiple dilation rates (1, 2, 3, 4, 6) enabled single-layer multi-scale feature extraction. This paralleled binocular observation at varying magnifications rather than sequential subject approach.
+
+\textbf{2. Local-Global Features Interaction (LGFI):} Rather than expensive spatial attention comparing all pixel pairs, channel-dimension attention compared learned feature channels. Computational complexity reduced from $O(N^2)$ pixel comparisons to $O(C^2)$ channel relationships (typically 64--256 channels).
+
+\textit{Performance outcomes:}
+\begin{itemize}
+    \item Parameters: 3.1 million (78\% reduction)
+    \item Inference time: 4.5 ms (desktop), 20 ms (edge device)
+    \item Accuracy: Superior to larger baseline models
+    \item Deployability: Real-time capability on embedded platforms
+\end{itemize}
+
+\textit{Revolutionary implication:} Architectural efficiency did not necessitate accuracy compromise.
+
+\textit{Deliberate scope boundaries:} The method did not address temporal consistency or dynamic scene handling.
+
+\subsection{ManyDepth2: Motion-Aware Multi-Perspective Fusion (2024)}
+\label{subsec:manydepth2}
+
+While Lite-Mono achieved efficiency, baseline approaches struggled with dynamic scenes. The fundamental challenge persisted: distinguishing camera motion from object motion when both occurred simultaneously \cite{zhou2024manydepth2}.
+
+ManyDepth2 introduced motion decomposition: separating camera displacement from independent object displacement. The architecture constructed three independent depth hypotheses:
+
+\begin{enumerate}
+    \item \textbf{Original reference perspective:} Standard matching using unmodified reference frames—effective for static scenes
+    \item \textbf{Static reference perspective:} Synthesized reference frames with moving object motion removed—effective for dynamic regions
+    \item \textbf{Flow-based perspective:} Direct optical flow utilization—effective when flow estimation proved accurate
+\end{enumerate}
+
+Attention mechanisms learned pixel-specific weighting across the three perspectives. High-confidence predictions concentrated attention on consistent perspectives; uncertain regions distributed weight across multiple perspectives.
+
+\textit{Quantitative results:}
+\begin{itemize}
+    \item Dynamic object accuracy: 27\% improvement
+    \item Camera pose estimation: 24\% accuracy improvement
+    \item Urban scene performance: State-of-the-art
+\end{itemize}
+
+\textit{Trade-off:} Sophistication enabling dynamic handling produced computational overhead. Performance remained substantially slower than lightweight approaches.
+
+\textit{Unexplored direction:} No investigation combined ManyDepth2's robustness with Lite-Mono's efficiency.
+
+\subsection{Video Depth Anything: Extended Sequence Scalability (2025)}
+\label{subsec:videodepth}
+
+Extended video sequences (2-minute movies, security footage, drone recordings) remained problematic for existing approaches \cite{chen2025video}. How could depth estimation scale to practical durations?
+
+Video Depth Anything adopted selective processing: identifying key frames for detailed analysis with automatic interpolation for intermediate frames. This strategy paralleled animation keyframing—precise specification at key moments with automatic intermediate filling.
+
+\textit{Technical components:}
+\begin{itemize}
+    \item Spatiotemporal processing enabling joint spatial-temporal modeling
+    \item Key-frame selection via video segmentation
+    \item Temporal gradient regularization preventing discontinuities
+\end{itemize}
+
+\textit{Performance:}
+\begin{itemize}
+    \item Processing speed: >30 FPS (real-time visualization)
+    \item Sequence duration: Scalable from clips to extended recordings
+    \item Accuracy: Simultaneous spatial precision and temporal smoothness achievement
+    \item Generalization: Zero-shot transfer to unseen video types
+\end{itemize}
+
+\textit{Significance:} The work positioned depth estimation toward production readiness.
+
+\textit{Limitations:} Edge device optimization received minimal attention; key-frame boundaries occasionally exhibit minor interpolation artifacts.
+
+\section{Comparative Analysis and Synthesized Insights}
+\label{sec:comparative}
+
+\subsection{Chronological Research Evolution}
+\label{subsec:evolution}
+
+The seven-year progression demonstrates systematic research advancement. Table~\ref{tab:evolution} summarizes this progression across three distinct research phases showing evolution from foundational work to specialization.
+
+\begin{table*}[t]
+\centering
+\footnotesize
+\begin{tabularx}{\textwidth}{|l|c|p{2cm}|X|}
+\hline
+\textbf{Phase} & \textbf{Years} & \textbf{Focus} & \textbf{Representative Works} \\
+\hline
+Foundational & 2018--2019 & Feasibility, dynamic scenes & Struct2Depth, Monodepth2, PackNet \\
+\hline
+Refinement & 2019--2021 & Temporal, geometry & Zhang et al., Johnston et al., Luo et al., Li et al. \\
+\hline
+Specialization & 2023--2025 & Targeted optimization & Lite-Mono, ManyDepth2, Video Depth Anything \\
+\hline
+\end{tabularx}
+\caption{Research evolution across seven years of monocular depth estimation from video sequences.}
+\label{tab:evolution}
+\end{table*}
+
+\subsection{Key Technical Insights}
+\label{subsec:insights}
+
+\textbf{From Struct2Depth:} Dynamic scene representation requires explicit architectural consideration.
+
+\textbf{From Monodepth2:} Architectural simplicity facilitates research progression and implementation accessibility.
+
+\textbf{From PackNet:} Sharp geometric detail preservation matters for downstream robotic applications.
+
+\textbf{From Zhang et al.:} Temporal reasoning captures information absent from frame-independent processing.
+
+\textbf{From Johnston et al.:} Uncertainty quantification provides meta-information regarding prediction reliability.
+
+\textbf{From Luo et al.:} Classical geometry integration complements learned patterns, producing superior results.
+
+\textbf{From Li et al.:} Training-time consistency constraints offer elegant solutions without test-time overhead.
+
+\textbf{From Lite-Mono:} Efficiency does not necessitate accuracy compromise through thoughtful redesign.
+
+\textbf{From ManyDepth2:} Multi-perspective fusion produces more robust predictions than single-approach methodologies.
+
+\textbf{From Video Depth Anything:} Intelligent processing strategies enable previously intractable applications.
+
+\section{Unresolved Challenges and Limitations}
+\label{sec:challenges}
+
+\subsection{Metric Scale Ambiguity}
+All approaches suffer from inherent scale ambiguity—networks distinguish relative depth but cannot determine absolute distances. Small nearby objects produce identical pixel patterns to distant large objects. Multi-modal sensor integration represents potentially valuable but largely unexplored solutions.
+
+\subsection{Domain Generalization}
+Models trained on highway driving scenarios demonstrate significant performance degradation on unfamiliar environments. Learned representations exhibit brittleness to distributional shift.
+
+\subsection{Simultaneous Efficiency and Dynamics}
+Lightweight architectures sacrifice dynamic scene handling; robust dynamic approaches require substantial computation. Achieving both remains elusive despite complementary necessity.
+
+\subsection{Optical Flow Quality Dependency}
+Methods incorporating motion decomposition depend critically on optical flow accuracy. Fundamental difficulties create downstream bottlenecks for motion-aware approaches.
+
+\subsection{Extended Sequence Boundary Artifacts}
+Extended video processing via key-framing produces subtle discontinuities at segment boundaries. Interpolation methodology improvements could address this limitation.
+
+\section{Research Opportunities and Future Directions}
+\label{sec:future}
+
+\subsection{Immediate Research Directions (1--2 Years)}
+
+\textbf{1. Efficient Temporal Consistency Integration:} Lite-Mono demonstrates efficient architecture design; Li et al. demonstrates training-time consistency constraints. Integration would achieve simultaneous edge-device deployability and temporal smoothness—currently unattained.
+
+\textbf{2. Lightweight Dynamic Handling:} ManyDepth2 proves multi-perspective fusion effectiveness; parameter and computational reduction could enable embedded deployment while maintaining dynamic robustness.
+
+\textbf{3. Improved Sequence Interpolation:} Video Depth Anything's key-frame strategy creates boundary artifacts. Learned interpolation could improve transition smoothness.
+
+\subsection{Medium-Term Opportunities (2--5 Years)}
+
+\textbf{1. Unified Multi-Objective Optimization:} Comprehensive system architecture combining Lite-Mono's efficiency, ManyDepth2's dynamic robustness, Video Depth Anything's scalability, and persistent temporal consistency.
+
+\textbf{2. Multi-Modal Sensor Fusion:} Integration with Inertial Measurement Units, Global Positioning Systems, and sparse LiDAR for metric scale recovery and robustness enhancement.
+
+\textbf{3. Domain Adaptation Mechanisms:} Transfer learning and domain-specific fine-tuning for generalization to diverse environmental conditions.
+
+\subsection{Long-Term Directions (5+ Years)}
+
+\textbf{1. Commodity Technology Development:} Depth estimation achieving ubiquity similar to contemporary face detection, with research migration toward specialized applications.
+
+\textbf{2. Emerging Application Domains:} Submersed environments, medical imaging, microscopy, and other specialized scenarios currently underexplored.
+
+\textbf{3. Hardware-Algorithm Co-design:} Specialized processing units optimized for temporal depth computation, enabling efficient deployment on diverse hardware platforms.
+
+\section{Discussion}
+\label{sec:discussion}
+
+The seven-year progression from Struct2Depth to Video Depth Anything illustrates fundamental patterns in research advancement. Early investigations identified core challenges—dynamic scene handling, temporal consistency, geometric validity. Subsequent work proposed diverse solutions addressing recognized limitations. Recent specialization recognizes that single universal approaches prove suboptimal; targeted optimization for specific constraints produces superior results within those domains.
+
+The absence of unified approaches combining efficiency, robustness, and scalability suggests significant opportunity for novel contributions. Current specialization trade-offs indicate that clever architectural design or novel training paradigms might simultaneously optimize multiple dimensions currently treated as competing objectives.
+
+The field's maturation is evident in progression toward practical deployment. Lite-Mono enables phone deployment, Video Depth Anything achieves real-time extended video processing, and ManyDepth2 handles complex real-world scenes—collectively addressing operational constraints previously prohibitive.
+
+However, fundamental limitations persist: metric scale ambiguity, domain generalization brittleness, and optical flow quality dependency remain inadequately addressed. Multi-modal sensor fusion represents a natural direction, as does transfer learning for domain adaptation.
+
+\section{Conclusion}
+\label{sec:conclusion}
+
+Self-supervised monocular depth estimation from video has progressed substantially over seven years, transitioning from exploratory feasibility investigations to specialized architectures addressing specific deployment scenarios. This review analyzed ten representative works demonstrating this evolution, identifying technical contributions, inherent limitations, and promising research directions.
+
+Current specialization represents both achievement and opportunity. Achieving simultaneous optimization of efficiency, dynamic robustness, and extended scalability represents a worthwhile research challenge for emerging investigators. Integration of multi-modal sensors, domain adaptation mechanisms, and improved motion estimation could address persisting limitations.
+
+Future research should focus on unified approaches combining current specializations' complementary strengths. Such contributions would position the field toward production-ready depth estimation systems applicable across diverse real-world scenarios.
+
+\begin{thebibliography}{99}
+
+\bibitem{godard2019digging}
+C. Godard, O. Mac Aodha, M. Firman, and G. J. Brostow, ``Digging Into Self-Supervised Monocular Depth Estimation,'' in \textit{Proc. IEEE/CVF Int. Conf. Comput. Vis. (ICCV)}, 2019, pp. 3828--3838.
+
+\bibitem{hartley2003multiple}
+R. Hartley and A. Zisserman, \textit{Multiple View Geometry in Computer Vision}, 2nd ed. Cambridge, U.K.: Cambridge Univ. Press, 2003.
+
+\bibitem{lecun2015deep}
+Y. LeCun, Y. Bengio, and G. Hinton, ``Deep learning,'' \textit{Nature}, vol. 521, no. 7553, pp. 436--444, 2015.
+
+\bibitem{jaderberg2015spatial}
+M. Jaderberg, K. Simonyan, A. Zisserman, and K. Kavukcuoglu, ``Spatial transformer networks,'' in \textit{Proc. Int. Conf. Mach. Learn. (ICML)}, 2015, pp. 2017--2025.
+
+\bibitem{casser2019depth}
+V. Casser, S. Pirk, R. Mahjourian, and A. Angelova, ``Depth prediction without the sensors: Leveraging structure for unsupervised learning from monocular videos,'' in \textit{Proc. AAAI Conf. Artif. Intell.}, vol. 33, no. 1, 2019, pp. 8001--8008.
+
+\bibitem{guizilini20203d}
+V. Guizilini, R. Ambrus, S. Pillai, A. Raventos, and A. Gaidon, ``3D packing for self-supervised monocular depth estimation,'' in \textit{Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR)}, 2020, pp. 2485--2494.
+
+\bibitem{zhang2019exploiting}
+L. Zhang, M. Zhu, X. Liu, S. Chandrasekaran, Y. Wang, and Y. Shi, ``Exploiting temporal consistency for real-time video depth estimation,'' in \textit{Proc. IEEE/CVF Int. Conf. Comput. Vis. (ICCV)}, 2019, pp. 1637--1645.
+
+\bibitem{johnston2020self}
+M. Johnston and C. L. Carneiro, ``Self-supervised monocular trained depth estimation using self-attention and discrete disparity volume,'' in \textit{Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR)}, 2020, pp. 12088--12097.
+
+\bibitem{luo2020consistent}
+C. Luo, Z. Zhu, Z. Yuille, L. Sigal, R. Wang, and W. Zeng, ``Consistent video depth estimation,'' in \textit{Proc. SIGGRAPH}, 2020, pp. 52:1--52:13.
+
+\bibitem{li2021enforcing}
+Z. Li, X. Guo, H. Zhu, S. Yang, S. Zhang, and N. Zheng, ``Enforcing temporal consistency in video depth estimation,'' in \textit{Proc. IEEE/CVF Int. Conf. Comput. Vis. Workshops (ICCVW)}, 2021, pp. 1--10.
+
+\bibitem{zhang2023lite}
+N. Zhang, F. Nex, G. Vosselman, and N. Kerle, ``Lite-Mono: A lightweight CNN and Transformer architecture for self-supervised monocular depth estimation,'' in \textit{Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR)}, 2023, pp. 16--25.
+
+\bibitem{zhou2024manydepth2}
+K. Zhou, J. Bian, J. Zheng, Q. Xie, N. Trigoni, and A. Markham, ``ManyDepth2: Motion-aware self-supervised monocular depth estimation in dynamic scenes,'' in \textit{Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR)}, 2024, pp. 1--12.
+
+\bibitem{chen2025video}
+S. Chen, H. Guo, S. Zhu, F. Zhang, Z. Huang, J. Feng, and B. Kang, ``Video Depth Anything: Consistent depth estimation for super-long videos,'' in \textit{Proc. IEEE/CVF Conf. Comput. Vis. Pattern Recognit. (CVPR)}, 2025, pp. 1--11.
+
+\end{thebibliography}
+
+\end{document}
